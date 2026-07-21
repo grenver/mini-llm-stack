@@ -1,0 +1,46 @@
+{
+  "bench": "moe_routing",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "tokens": 256,
+      "experts": 4,
+      "top_k": 2,
+      "d": 64,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 0.584
+    },
+    {
+      "tokens": 256,
+      "experts": 4,
+      "top_k": 2,
+      "d": 64,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 639.274
+    },
+    {
+      "tokens": 256,
+      "experts": 4,
+      "top_k": 2,
+      "d": 64,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 0.196
+    },
+    {
+      "tokens": 256,
+      "experts": 4,
+      "top_k": 2,
+      "d": 64,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 556.165
+    }
+  ]
+}
