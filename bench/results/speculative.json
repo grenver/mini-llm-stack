@@ -1,0 +1,42 @@
+{
+  "bench": "speculative",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "impl": "autoregressive",
+      "gamma": 0,
+      "wall_s": 0.063,
+      "tokens_per_s": 764.4,
+      "acceptance_rate": null,
+      "tokens_per_round": 1.0
+    },
+    {
+      "impl": "speculative",
+      "gamma": 2,
+      "wall_s": 0.089,
+      "tokens_per_s": 541.44,
+      "acceptance_rate": 0.345,
+      "tokens_per_round": 1.69
+    },
+    {
+      "impl": "speculative",
+      "gamma": 4,
+      "wall_s": 0.078,
+      "tokens_per_s": 612.74,
+      "acceptance_rate": 0.26,
+      "tokens_per_round": 2.04
+    },
+    {
+      "impl": "speculative",
+      "gamma": 8,
+      "wall_s": 0.125,
+      "tokens_per_s": 383.79,
+      "acceptance_rate": 0.13,
+      "tokens_per_round": 2.04
+    }
+  ]
+}
