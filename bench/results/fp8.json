@@ -1,36 +1,36 @@
 {
   "bench": "fp8",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
       "arm": "fp32",
       "loss@0": 4.1617,
-      "loss@37": 2.3838,
-      "loss@75": 1.2717,
-      "loss@149": 0.6288,
-      "final_loss": 0.6779,
+      "loss@100": 0.67,
+      "loss@200": 0.4201,
+      "loss@399": 0.3549,
+      "final_loss": 0.3628,
       "diverged": false
     },
     {
       "arm": "fp8_dynamic_scaling",
       "loss@0": 4.1645,
-      "loss@37": 2.3464,
-      "loss@75": 1.2627,
-      "loss@149": 0.6407,
-      "final_loss": 0.6873,
+      "loss@100": 0.6569,
+      "loss@200": 0.4208,
+      "loss@399": 0.3575,
+      "final_loss": 0.3634,
       "diverged": false
     },
     {
       "arm": "fp8_no_scaling",
-      "loss@0": 4.1618,
-      "loss@37": 2.9589,
-      "loss@75": 2.9811,
-      "loss@149": 2.953,
-      "final_loss": 2.9386,
+      "loss@0": 4.1617,
+      "loss@100": 2.9359,
+      "loss@200": 2.8699,
+      "loss@399": 2.8656,
+      "final_loss": 2.8743,
       "diverged": false
     }
   ],

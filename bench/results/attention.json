@@ -1,28 +1,100 @@
 {
   "bench": "attention",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
-      "seq": 64,
+      "seq": 256,
       "impl": "naive_pytorch",
-      "latency_ms": 0.07,
-      "peak_mem_mb": NaN
+      "latency_ms": 0.736,
+      "peak_mem_mb": 31.1
     },
     {
-      "seq": 64,
+      "seq": 256,
       "impl": "sdpa",
-      "latency_ms": 0.022,
-      "peak_mem_mb": NaN
+      "latency_ms": 0.107,
+      "peak_mem_mb": 12.1
     },
     {
-      "seq": 64,
+      "seq": 256,
       "impl": "triton_flash",
-      "latency_ms": 67.213,
-      "peak_mem_mb": NaN
+      "latency_ms": 1.381,
+      "peak_mem_mb": 12.2
+    },
+    {
+      "seq": 512,
+      "impl": "naive_pytorch",
+      "latency_ms": 2.4,
+      "peak_mem_mb": 86.1
+    },
+    {
+      "seq": 512,
+      "impl": "sdpa",
+      "latency_ms": 0.238,
+      "peak_mem_mb": 16.1
+    },
+    {
+      "seq": 512,
+      "impl": "triton_flash",
+      "latency_ms": 3.991,
+      "peak_mem_mb": 16.2
+    },
+    {
+      "seq": 1024,
+      "impl": "naive_pytorch",
+      "latency_ms": 8.366,
+      "peak_mem_mb": 292.1
+    },
+    {
+      "seq": 1024,
+      "impl": "sdpa",
+      "latency_ms": 0.401,
+      "peak_mem_mb": 24.1
+    },
+    {
+      "seq": 1024,
+      "impl": "triton_flash",
+      "latency_ms": 12.621,
+      "peak_mem_mb": 24.2
+    },
+    {
+      "seq": 2048,
+      "impl": "naive_pytorch",
+      "latency_ms": 27.91,
+      "peak_mem_mb": 1088.2
+    },
+    {
+      "seq": 2048,
+      "impl": "sdpa",
+      "latency_ms": 1.361,
+      "peak_mem_mb": 40.1
+    },
+    {
+      "seq": 2048,
+      "impl": "triton_flash",
+      "latency_ms": 47.065,
+      "peak_mem_mb": 40.4
+    },
+    {
+      "seq": 4096,
+      "impl": "naive_pytorch",
+      "latency_ms": 110.183,
+      "peak_mem_mb": 4216.2
+    },
+    {
+      "seq": 4096,
+      "impl": "sdpa",
+      "latency_ms": 5.428,
+      "peak_mem_mb": 72.1
+    },
+    {
+      "seq": 4096,
+      "impl": "triton_flash",
+      "latency_ms": 180.977,
+      "peak_mem_mb": 72.6
     }
   ]
 }

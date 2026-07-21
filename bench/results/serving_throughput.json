@@ -1,38 +1,38 @@
 {
   "bench": "serving_throughput",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
       "impl": "sequential_naive",
-      "requests": 6,
-      "max_new": 16,
-      "wall_s": 0.086,
-      "tokens_per_s": 1121.96
+      "requests": 32,
+      "max_new": 64,
+      "wall_s": 23.759,
+      "tokens_per_s": 86.2
     },
     {
       "impl": "engine_batch1",
-      "requests": 6,
-      "max_new": 16,
-      "wall_s": 0.066,
-      "tokens_per_s": 1445.14
-    },
-    {
-      "impl": "engine_batch2",
-      "requests": 6,
-      "max_new": 16,
-      "wall_s": 0.056,
-      "tokens_per_s": 1709.85
+      "requests": 32,
+      "max_new": 64,
+      "wall_s": 21.525,
+      "tokens_per_s": 95.15
     },
     {
       "impl": "engine_batch8",
-      "requests": 6,
-      "max_new": 16,
-      "wall_s": 0.031,
-      "tokens_per_s": 3073.7
+      "requests": 32,
+      "max_new": 64,
+      "wall_s": 3.663,
+      "tokens_per_s": 559.13
+    },
+    {
+      "impl": "engine_batch32",
+      "requests": 32,
+      "max_new": 64,
+      "wall_s": 1.863,
+      "tokens_per_s": 1099.37
     }
   ]
 }

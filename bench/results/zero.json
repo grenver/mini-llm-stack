@@ -1,22 +1,43 @@
 {
   "bench": "zero",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
       "config": "adamw_1proc",
       "per_rank_state_mb": 37.28,
-      "step_ms": 54.2,
+      "step_ms": 140.1,
       "memory_real": true,
       "timing_simulated": false
     },
     {
       "config": "zero_w2_overlap",
       "per_rank_state_mb": 18.88,
-      "step_ms": 213.5,
+      "step_ms": 263.1,
+      "memory_real": true,
+      "timing_simulated": true
+    },
+    {
+      "config": "zero_w2_sync",
+      "per_rank_state_mb": 18.88,
+      "step_ms": 305.9,
+      "memory_real": true,
+      "timing_simulated": true
+    },
+    {
+      "config": "zero_w4_overlap",
+      "per_rank_state_mb": 9.5,
+      "step_ms": 844.0,
+      "memory_real": true,
+      "timing_simulated": true
+    },
+    {
+      "config": "zero_w4_sync",
+      "per_rank_state_mb": 9.5,
+      "step_ms": 809.1,
       "memory_real": true,
       "timing_simulated": true
     }

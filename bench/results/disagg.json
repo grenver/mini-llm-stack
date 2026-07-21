@@ -1,29 +1,29 @@
 {
   "bench": "disagg",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
       "config": "unified_engine",
-      "wall_s": 0.054,
+      "wall_s": 2.18,
       "kv_transferred_mb": 0.0,
       "mean_transfer_ms": 0.0
     },
     {
       "config": "disaggregated_simulated",
-      "wall_s": 1.582,
-      "kv_transferred_mb": 0.75,
-      "mean_transfer_ms": 42.77
+      "wall_s": 4.999,
+      "kv_transferred_mb": 21.0,
+      "mean_transfer_ms": 95.31
     }
   ],
   "simulated": true,
   "per_request_breakdown": {
-    "mean_prefill_ms": 5.12,
-    "mean_transfer_ms": 42.77,
-    "mean_decode_ms": 91.77
+    "mean_prefill_ms": 95.87,
+    "mean_transfer_ms": 95.31,
+    "mean_decode_ms": 1072.23
   },
   "note": "both pools share one device: the split can only add overhead in this environment; breakdown shows where it goes"
 }

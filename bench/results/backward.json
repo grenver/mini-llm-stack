@@ -1,22 +1,58 @@
 {
   "bench": "backward",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
-      "seq": 32,
+      "seq": 256,
       "impl": "triton_fwd_bwd",
-      "latency_ms": 71.069,
-      "peak_mem_mb": NaN
+      "latency_ms": 4.514,
+      "peak_mem_mb": 16.1
     },
     {
-      "seq": 32,
+      "seq": 256,
       "impl": "reference_fwd_bwd",
-      "latency_ms": 1.289,
-      "peak_mem_mb": NaN
+      "latency_ms": 2.059,
+      "peak_mem_mb": 60.3
+    },
+    {
+      "seq": 512,
+      "impl": "triton_fwd_bwd",
+      "latency_ms": 14.462,
+      "peak_mem_mb": 48.4
+    },
+    {
+      "seq": 512,
+      "impl": "reference_fwd_bwd",
+      "latency_ms": 5.143,
+      "peak_mem_mb": 168.5
+    },
+    {
+      "seq": 1024,
+      "impl": "triton_fwd_bwd",
+      "latency_ms": 27.385,
+      "peak_mem_mb": 80.5
+    },
+    {
+      "seq": 1024,
+      "impl": "reference_fwd_bwd",
+      "latency_ms": 18.64,
+      "peak_mem_mb": 577.2
+    },
+    {
+      "seq": 2048,
+      "impl": "triton_fwd_bwd",
+      "latency_ms": 105.322,
+      "peak_mem_mb": 144.8
+    },
+    {
+      "seq": 2048,
+      "impl": "reference_fwd_bwd",
+      "latency_ms": 71.144,
+      "peak_mem_mb": 2164.2
     }
   ]
 }

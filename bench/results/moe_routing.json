@@ -1,46 +1,226 @@
 {
   "bench": "moe_routing",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
-      "tokens": 256,
-      "experts": 4,
+      "tokens": 4096,
+      "experts": 8,
       "top_k": 2,
-      "d": 64,
+      "d": 1024,
       "experts_kind": "mlp",
       "impl": "naive",
-      "latency_ms": 0.584
+      "latency_ms": 9.876
     },
     {
-      "tokens": 256,
-      "experts": 4,
+      "tokens": 4096,
+      "experts": 8,
       "top_k": 2,
-      "d": 64,
+      "d": 1024,
       "experts_kind": "mlp",
       "impl": "triton",
-      "latency_ms": 639.274
+      "latency_ms": 6.165
     },
     {
-      "tokens": 256,
-      "experts": 4,
+      "tokens": 4096,
+      "experts": 8,
       "top_k": 2,
-      "d": 64,
+      "d": 1024,
       "experts_kind": "routing_only",
       "impl": "naive",
-      "latency_ms": 0.196
+      "latency_ms": 1.875
     },
     {
-      "tokens": 256,
-      "experts": 4,
+      "tokens": 4096,
+      "experts": 8,
       "top_k": 2,
-      "d": 64,
+      "d": 1024,
       "experts_kind": "routing_only",
       "impl": "triton",
-      "latency_ms": 556.165
+      "latency_ms": 0.974
+    },
+    {
+      "tokens": 16384,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 23.879
+    },
+    {
+      "tokens": 16384,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 21.805
+    },
+    {
+      "tokens": 16384,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 4.295
+    },
+    {
+      "tokens": 16384,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 2.035
+    },
+    {
+      "tokens": 16384,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 26.67
+    },
+    {
+      "tokens": 16384,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 21.073
+    },
+    {
+      "tokens": 16384,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 6.303
+    },
+    {
+      "tokens": 16384,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 2.243
+    },
+    {
+      "tokens": 65536,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 88.665
+    },
+    {
+      "tokens": 65536,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 81.82
+    },
+    {
+      "tokens": 65536,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 13.811
+    },
+    {
+      "tokens": 65536,
+      "experts": 8,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 6.719
+    },
+    {
+      "tokens": 65536,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 99.091
+    },
+    {
+      "tokens": 65536,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 93.017
+    },
+    {
+      "tokens": 65536,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 15.994
+    },
+    {
+      "tokens": 65536,
+      "experts": 32,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 6.84
+    },
+    {
+      "tokens": 65536,
+      "experts": 64,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "naive",
+      "latency_ms": 100.856
+    },
+    {
+      "tokens": 65536,
+      "experts": 64,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "mlp",
+      "impl": "triton",
+      "latency_ms": 94.92
+    },
+    {
+      "tokens": 65536,
+      "experts": 64,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "naive",
+      "latency_ms": 18.82
+    },
+    {
+      "tokens": 65536,
+      "experts": 64,
+      "top_k": 2,
+      "d": 1024,
+      "experts_kind": "routing_only",
+      "impl": "triton",
+      "latency_ms": 7.003
     }
   ]
 }

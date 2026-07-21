@@ -1,22 +1,22 @@
 {
   "bench": "parallel",
   "env": {
-    "device": "cpu (Triton interpreter)",
-    "torch": "2.13.0+cpu",
-    "meaningful_timings": false
+    "device": "Tesla T4",
+    "torch": "2.10.0+cu128",
+    "meaningful_timings": true
   },
   "rows": [
     {
       "config": "dense_1proc",
-      "step_ms": 40.3
+      "step_ms": 109.1
     },
     {
       "config": "tp2_simulated",
-      "step_ms": 96.4
+      "step_ms": 238.6
     },
     {
       "config": "pp2_mb2_simulated",
-      "step_ms": 58.0
+      "step_ms": 133.0
     }
   ],
   "simulated": true,
