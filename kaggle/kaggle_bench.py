@@ -20,7 +20,19 @@ t_start = time.time()
 os.chdir(WORK)
 if os.path.exists("mini-llm-stack"):
     shutil.rmtree("mini-llm-stack")
-subprocess.run(["git", "clone", "--depth", "1", REPO], check=True)
+
+# Prefer an attached source dataset (works without kernel internet);
+# fall back to cloning from GitHub.
+src = None
+for cand in sorted(__import__("glob").glob("/kaggle/input/*")):
+    if os.path.isdir(os.path.join(cand, "kernels")):
+        src = cand
+        break
+if src:
+    print("using source dataset:", src)
+    shutil.copytree(src, "mini-llm-stack")
+else:
+    subprocess.run(["git", "clone", "--depth", "1", REPO], check=True)
 os.chdir("mini-llm-stack")
 
 import torch  # noqa: E402

@@ -14,12 +14,15 @@ import json
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).parent
-RESULTS = HERE.parent / "bench" / "results"
+ROOT = HERE.parent
+RESULTS = ROOT / "bench" / "results"
 SLUG = "mini-llm-stack-bench"
+DATA_SLUG = "mini-llm-stack-src"
 
 
 def username() -> str:
@@ -31,8 +34,38 @@ def username() -> str:
     raise SystemExit(f"could not find kaggle username in config:\n{out}")
 
 
-def push():
+def push_dataset() -> str:
+    """Upload the repo snapshot (tracked files at HEAD) as a private dataset
+    so the kernel needs no internet. Returns the dataset ref."""
     user = username()
+    ref = f"{user}/{DATA_SLUG}"
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        tar = td / "src.tar"
+        subprocess.run(["git", "archive", "HEAD", "-o", str(tar)],
+                       cwd=ROOT, check=True)
+        src = td / "repo"
+        src.mkdir()
+        with tarfile.open(tar) as tf:
+            tf.extractall(src)
+        tar.unlink()
+        (src / "dataset-metadata.json").write_text(json.dumps({
+            "title": DATA_SLUG, "id": ref,
+            "licenses": [{"name": "CC0-1.0"}]}, indent=1))
+        r = subprocess.run(["kaggle", "datasets", "create", "-p", str(src),
+                            "--dir-mode", "zip"],
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        if "already exists" in out or "409" in out or r.returncode != 0:
+            subprocess.run(["kaggle", "datasets", "version", "-p", str(src),
+                            "--dir-mode", "zip", "-m", "update"], check=True)
+        print(f"dataset {ref} pushed")
+    return ref
+
+
+def push(offline: bool = False):
+    user = username()
+    sources = [push_dataset()] if offline else []
     with tempfile.TemporaryDirectory() as td:
         td = Path(td)
         shutil.copy(HERE / "kaggle_bench.py", td / "kaggle_bench.py")
@@ -42,10 +75,10 @@ def push():
             "code_file": "kaggle_bench.py",
             "language": "python",
             "kernel_type": "script",
-            "is_private": "true",
-            "enable_gpu": "true",
-            "enable_internet": "true",
-            "dataset_sources": [],
+            "is_private": True,
+            "enable_gpu": True,
+            "enable_internet": not offline,
+            "dataset_sources": sources,
             "competition_sources": [],
             "kernel_sources": [],
         }, indent=1))
@@ -78,4 +111,7 @@ def fetch():
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "push"
-    {"push": push, "status": status, "fetch": fetch}[cmd]()
+    if cmd == "push":
+        push(offline="--offline" in sys.argv)
+    else:
+        {"status": status, "fetch": fetch}[cmd]()
