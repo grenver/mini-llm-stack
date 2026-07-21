@@ -26,6 +26,7 @@ generated Triton code for inspection.
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass, field
 
 import torch
@@ -189,12 +190,29 @@ def _emit(g: Graph) -> str:
 
 
 class FusedKernel:
+    _counter = 0
+
     def __init__(self, graph: Graph):
         self.graph = graph
         self.source = _emit(graph)
-        ns = {"triton": triton, "tl": tl}
-        exec(compile(self.source, "<fused_kernel>", "exec"), ns)
-        self._kernel = ns["_fused_kernel"]
+        # compiled Triton resolves @jit sources via inspect.getsource, so the
+        # generated code must live in a real file (exec-from-string only
+        # works under the interpreter)
+        import importlib.util
+        import tempfile
+        FusedKernel._counter += 1
+        fd, path = tempfile.mkstemp(
+            suffix=".py", prefix=f"triton_fused_{FusedKernel._counter}_")
+        with os.fdopen(fd, "w") as f:
+            f.write("import triton\nimport triton.language as tl\n\n"
+                    + self.source)
+        self.source_path = path
+        spec = importlib.util.spec_from_file_location(
+            f"_triton_fused_{FusedKernel._counter}", path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        self._kernel = mod._fused_kernel
 
     def __call__(self, *tensors: torch.Tensor) -> torch.Tensor:
         g = self.graph
