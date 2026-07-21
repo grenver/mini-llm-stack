@@ -82,7 +82,10 @@ def push(offline: bool = False):
             "competition_sources": [],
             "kernel_sources": [],
         }, indent=1))
-        subprocess.run(["kaggle", "kernels", "push", "-p", str(td)], check=True)
+        # T4 explicitly: Kaggle otherwise hands out a P100 (sm_60), which
+        # current torch builds and Triton no longer support
+        subprocess.run(["kaggle", "kernels", "push", "-p", str(td),
+                        "--accelerator", "NvidiaTeslaT4"], check=True)
     print(f"pushed {user}/{SLUG}; poll with: python kaggle/push_and_fetch.py status")
 
 
