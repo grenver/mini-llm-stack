@@ -31,6 +31,9 @@ for cand in sorted(__import__("glob").glob("/kaggle/input/*")):
 if src:
     print("using source dataset:", src)
     shutil.copytree(src, "mini-llm-stack")
+    # /kaggle/input is a read-only mount and copytree preserves modes —
+    # re-open the tree for writing or every bench's results save fails
+    subprocess.run(["chmod", "-R", "u+w", "mini-llm-stack"], check=True)
 else:
     subprocess.run(["git", "clone", "--depth", "1", REPO], check=True)
 os.chdir("mini-llm-stack")
