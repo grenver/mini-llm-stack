@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import sys
 import traceback
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))  # repo root importable
 
 import torch
 
