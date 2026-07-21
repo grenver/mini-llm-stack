@@ -1,0 +1,30 @@
+{
+  "bench": "quantize_accuracy",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "variant": "fp32",
+      "val_loss": 0.5054,
+      "perplexity": 1.658,
+      "loss_increase_pct": 0.0
+    },
+    {
+      "variant": "int8",
+      "val_loss": 0.5055,
+      "perplexity": 1.658,
+      "loss_increase_pct": 0.02
+    },
+    {
+      "variant": "int4_g32",
+      "val_loss": 0.5081,
+      "perplexity": 1.662,
+      "loss_increase_pct": 0.54
+    }
+  ],
+  "timings_irrelevant": true,
+  "note": "held-out loss on the toy char corpus after 200 training steps; reference path (kernel and reference give identical logits \u2014 see tests/test_quantize.py)"
+}

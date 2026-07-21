@@ -68,6 +68,20 @@ def save_results(name: str, rows: list[dict], extra: dict | None = None):
     if extra:
         payload.update(extra)
     path = RESULTS_DIR / f"{name}.json"
+
+    # Don't let a local CPU run silently clobber real GPU numbers: divert to
+    # a sidecar file instead (set BENCH_FORCE_OVERWRITE=1 to override).
+    if (path.exists() and not payload["env"]["meaningful_timings"]
+            and not payload.get("timings_irrelevant")
+            and not os.environ.get("BENCH_FORCE_OVERWRITE")):
+        try:
+            old = json.loads(path.read_text())
+            if old.get("env", {}).get("meaningful_timings"):
+                path = RESULTS_DIR / f"{name}.cpu.json"
+                print(f"[kept GPU results; CPU run diverted to {path.name}]")
+        except (json.JSONDecodeError, OSError):
+            pass
+
     path.write_text(json.dumps(payload, indent=2))
     print(f"[saved] {path}")
     return path

@@ -17,6 +17,7 @@ BENCHES = [
     "bench/bench_moe_routing.py",
     "bench/bench_parallel.py",
     "bench/bench_quantize.py",
+    "bench/bench_quantize_accuracy.py",
     "bench/bench_serving_throughput.py",
     "bench/bench_speculative.py",
     "bench/bench_backward.py",

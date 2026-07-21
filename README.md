@@ -1,5 +1,7 @@
 # mini-llm-stack
 
+[![CI](https://github.com/grenver/mini-llm-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/grenver/mini-llm-stack/actions/workflows/ci.yml)
+
 A small-scale, end-to-end LLM stack that mirrors real production systems:
 a from-scratch MoE transformer with (simulated) multi-GPU training
 parallelism, and an inference engine with the optimizations real serving
@@ -127,6 +129,9 @@ The wins and the losses, honestly:
   at decode shapes on T4 (fp16 GEMV 0.07 ms vs fused INT8 1.2 ms). The 2-4×
   weight-memory reduction is real; beating a mature GEMM library on raw
   latency needs decode-specialized kernels this project doesn't have.
+  Model quality survives quantization: **+0.02% held-out loss at INT8,
+  +0.54% at INT4** (group 32) on the trained toy model — perplexity 1.658 →
+  1.658 / 1.662.
 * **FP8 with dynamic scaling (Phase 9): tracks fp32 exactly** (0.3634 vs
   0.3628 final loss); without scaling, training stalls at 2.87 — gradient
   casts at scale 1.0 underflow e5m2 and learning stops.

@@ -84,18 +84,33 @@ _Measured on `Tesla T4`._
 | memory | fp32 | 97.03 |
 | memory | int8 | 24.82 |
 | memory | int4 | 15.61 |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
-| latency |  |  |
+
+| kind | M | N | K | impl | latency_ms |
+|---|---|---|---|---|---|
+| latency | 1 | 2048 | 2048 | fp_matmul | 0.0679 |
+| latency | 1 | 2048 | 2048 | dequant_then_matmul_int8 | 0.4531 |
+| latency | 1 | 2048 | 2048 | fused_int8 | 1.2003 |
+| latency | 1 | 2048 | 2048 | fused_int4 | 0.879 |
+| latency | 16 | 2048 | 2048 | fp_matmul | 0.0948 |
+| latency | 16 | 2048 | 2048 | dequant_then_matmul_int8 | 0.4956 |
+| latency | 16 | 2048 | 2048 | fused_int8 | 1.2098 |
+| latency | 16 | 2048 | 2048 | fused_int4 | 0.869 |
+| latency | 128 | 2048 | 2048 | fp_matmul | 0.1206 |
+| latency | 128 | 2048 | 2048 | dequant_then_matmul_int8 | 0.5225 |
+| latency | 128 | 2048 | 2048 | fused_int8 | 4.0002 |
+| latency | 128 | 2048 | 2048 | fused_int4 | 1.9409 |
+
+### Phase 4 (cont.) — Quantized model accuracy
+
+Held-out loss/perplexity of the same trained model under fp32, INT8 and INT4 weights — the memory/latency numbers above only matter if quality survives. Device-independent numerics.
+
+_Measured on `cpu (Triton interpreter)` (device-independent numerics — no timings involved)._
+
+| variant | val_loss | perplexity | loss_increase_pct |
+|---|---|---|---|
+| fp32 | 0.5054 | 1.658 | 0.0 |
+| int8 | 0.5055 | 1.658 | 0.02 |
+| int4_g32 | 0.5081 | 1.662 | 0.54 |
 
 ## Phase 5 — Continuous batching + paged KV cache
 

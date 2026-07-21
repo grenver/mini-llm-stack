@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies (CPU torch + triton)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install triton numpy pytest matplotlib
+      - name: Full test suite (Triton interpreter mode)
+        run: python run_all.py

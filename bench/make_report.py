@@ -41,6 +41,11 @@ EXPLAIN = {
         "bytes; dequantizing to fp before the matmul reads W at full width "
         "anyway. **Kernel:** loads INT8/INT4 weights, dequantizes in "
         "registers inside the K-loop — 2×/4× less weight traffic.\n"),
+    "quantize_accuracy": (
+        "### Phase 4 (cont.) — Quantized model accuracy\n\n"
+        "Held-out loss/perplexity of the same trained model under fp32, "
+        "INT8 and INT4 weights — the memory/latency numbers above only "
+        "matter if quality survives. Device-independent numerics.\n"),
     "serving_throughput": (
         "## Phase 5 — Continuous batching + paged KV cache\n\n"
         "**Bottleneck:** sequential decode re-reads all weights per token per "
@@ -78,15 +83,44 @@ EXPLAIN = {
 }
 
 
+def group_rows(rows: list[dict]) -> list[list[dict]]:
+    """Split rows into groups of identical field-sets (a bench may emit
+    differently-shaped rows, e.g. memory rows and latency rows)."""
+    groups: dict[frozenset, list[dict]] = {}
+    order: list[frozenset] = []
+    for r in rows:
+        key = frozenset(r.keys())
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(r)
+    return [groups[k] for k in order]
+
+
 def fmt_table(rows: list[dict]) -> str:
+    """Render rows as one or more markdown tables — one per row shape.
+
+    Invariant (enforced, not assumed): every key of every row must appear as
+    a column of its table. A violation raises instead of silently rendering
+    blank cells; that exact failure shipped once (Phase 4 latency rows were
+    dropped because columns came from the first — memory — row only).
+    """
     if not rows:
         return "_no rows_\n"
-    cols = list(rows[0].keys())
-    out = ["| " + " | ".join(cols) + " |",
-           "|" + "|".join("---" for _ in cols) + "|"]
-    for r in rows:
-        out.append("| " + " | ".join(str(r.get(c, "")) for c in cols) + " |")
-    return "\n".join(out) + "\n"
+    parts = []
+    for group in group_rows(rows):
+        cols = list(group[0].keys())
+        for r in group:
+            missing = set(r.keys()) - set(cols)
+            if missing:
+                raise RuntimeError(
+                    f"report table would drop fields {missing} of row {r}")
+        out = ["| " + " | ".join(cols) + " |",
+               "|" + "|".join("---" for _ in cols) + "|"]
+        for r in group:
+            out.append("| " + " | ".join(str(r.get(c, "")) for c in cols) + " |")
+        parts.append("\n".join(out) + "\n")
+    return "\n".join(parts)
 
 
 def main():
@@ -94,8 +128,8 @@ def main():
                 "_Generated from bench/results/*.json — rerun benches then "
                 "`python bench/make_report.py` to refresh._\n"]
     order = ["attention", "moe_routing", "parallel", "quantize",
-             "serving_throughput", "speculative", "backward", "fp8", "zero",
-             "disagg"]
+             "quantize_accuracy", "serving_throughput", "speculative",
+             "backward", "fp8", "zero", "disagg"]
     seen = set()
     files = {p.stem: p for p in RESULTS.glob("*.json")}
     for name in order + sorted(set(files) - set(order)):
@@ -106,7 +140,10 @@ def main():
         env = blob.get("env", {})
         sections.append(EXPLAIN.get(name, f"## {name}\n"))
         tag = env.get("device", "?")
-        if not env.get("meaningful_timings", True):
+        if blob.get("timings_irrelevant"):
+            sections.append(f"_Measured on `{tag}` (device-independent "
+                            "numerics — no timings involved)._\n")
+        elif not env.get("meaningful_timings", True):
             sections.append(f"> ⚠️ **Correctness-only run** on `{tag}` — "
                             "interpreter timings are meaningless; rerun on "
                             "GPU for real numbers.\n")
