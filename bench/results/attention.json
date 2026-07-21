@@ -1,0 +1,28 @@
+{
+  "bench": "attention",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "seq": 64,
+      "impl": "naive_pytorch",
+      "latency_ms": 0.07,
+      "peak_mem_mb": NaN
+    },
+    {
+      "seq": 64,
+      "impl": "sdpa",
+      "latency_ms": 0.022,
+      "peak_mem_mb": NaN
+    },
+    {
+      "seq": 64,
+      "impl": "triton_flash",
+      "latency_ms": 67.213,
+      "peak_mem_mb": NaN
+    }
+  ]
+}

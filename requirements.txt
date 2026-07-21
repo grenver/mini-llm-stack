@@ -1,0 +1,6 @@
+torch>=2.9
+numpy
+pytest
+matplotlib
+triton; platform_system != "Windows"
+triton-windows; platform_system == "Windows"
