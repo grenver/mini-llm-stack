@@ -1,0 +1,24 @@
+{
+  "bench": "parallel",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "config": "dense_1proc",
+      "step_ms": 40.3
+    },
+    {
+      "config": "tp2_simulated",
+      "step_ms": 96.4
+    },
+    {
+      "config": "pp2_mb2_simulated",
+      "step_ms": 58.0
+    }
+  ],
+  "simulated": true,
+  "note": "all ranks share one physical device; no real parallel speedup is possible in this environment"
+}
