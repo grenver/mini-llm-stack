@@ -1,0 +1,26 @@
+{
+  "bench": "zero",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "config": "adamw_1proc",
+      "per_rank_state_mb": 37.28,
+      "step_ms": 54.2,
+      "memory_real": true,
+      "timing_simulated": false
+    },
+    {
+      "config": "zero_w2_overlap",
+      "per_rank_state_mb": 18.88,
+      "step_ms": 213.5,
+      "memory_real": true,
+      "timing_simulated": true
+    }
+  ],
+  "full_state_mb": 37.28,
+  "note": "memory columns real (states live in separate processes); step_ms simulated \u2014 ranks share one device"
+}
