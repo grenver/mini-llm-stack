@@ -15,14 +15,19 @@ split produces identical output to the unified engine and (b) the overhead
 breakdown (where the transfer cost actually goes).
 
 Topology: router (parent) → prefill worker → decode worker → router,
-connected by multiprocessing queues. The KV handoff pickles per-layer
-[H, S, D] tensors through the queue — on real disaggregated hardware this
-is a NIC/NVLink transfer; here it's IPC, but it is a REAL serialization
-+ copy cost of the same shape.
+connected by multiprocessing queues. The KV handoff is serialized to a
+byte buffer (torch.save) and deserialized on the decode side — the same
+wire-format discipline a real disaggregated system uses over NIC/NVLink,
+and deliberately NOT torch.multiprocessing's shared-memory tensor passing:
+on Linux that path moves tensors via file-descriptor passing, and a feeder-
+thread serialization failure silently DROPS the item (observed in CI as
+"all payloads lost, sentinel delivered"). Bytes go through the plain
+pickler on every platform.
 """
 
 from __future__ import annotations
 
+import io
 import time
 from dataclasses import dataclass
 
@@ -68,10 +73,12 @@ def prefill_worker(cfg_dict, state_dict, req_q, kv_q):
         logits = cm.logits_for(list(prompt))
         first_tok = int(logits[-1].argmax())
         kv = [(k[0].contiguous(), v[0].contiguous()) for k, v in cm.caches]
+        buf = io.BytesIO()
+        torch.save(kv, buf)
+        payload = buf.getvalue()
         prefill_ms = (time.perf_counter() - t0) * 1000
-        kv_bytes = sum(k.numel() * k.element_size() * 2 for k, _ in kv)
-        kv_q.put((req_id, list(prompt), first_tok, kv, max_new,
-                  prefill_ms, kv_bytes, time.perf_counter()))
+        kv_q.put((req_id, list(prompt), first_tok, payload, max_new,
+                  prefill_ms, len(payload), time.perf_counter()))
 
 
 def decode_worker(cfg_dict, state_dict, kv_q, done_q, num_blocks, block_size):
@@ -95,8 +102,9 @@ def decode_worker(cfg_dict, state_dict, kv_q, done_q, num_blocks, block_size):
             if item is SENTINEL:
                 drained = True
                 break
-            (req_id, prompt, first_tok, kv, max_new,
+            (req_id, prompt, first_tok, payload, max_new,
              prefill_ms, kv_bytes, sent_ts) = item
+            kv = torch.load(io.BytesIO(payload), weights_only=True)
             S = len(prompt)
             cache.allocate(req_id, S + 1)
             for li, (k, v) in enumerate(kv):
@@ -157,7 +165,7 @@ def run_disaggregated(model: Transformer, requests: list[tuple[list[int], int]],
 
     results = {}
     while True:
-        item = done_q.get()
+        item = done_q.get(timeout=300)   # fail loudly, never hang CI
         if item is SENTINEL:
             break
         results[item.req_id] = item
