@@ -1,0 +1,57 @@
+{
+  "bench": "quantize",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "kind": "memory",
+      "variant": "fp32",
+      "weight_mb": 97.03
+    },
+    {
+      "kind": "memory",
+      "variant": "int8",
+      "weight_mb": 24.82
+    },
+    {
+      "kind": "memory",
+      "variant": "int4",
+      "weight_mb": 15.61
+    },
+    {
+      "kind": "latency",
+      "M": 4,
+      "N": 128,
+      "K": 128,
+      "impl": "fp_matmul",
+      "latency_ms": 0.0104
+    },
+    {
+      "kind": "latency",
+      "M": 4,
+      "N": 128,
+      "K": 128,
+      "impl": "dequant_then_matmul_int8",
+      "latency_ms": 0.03
+    },
+    {
+      "kind": "latency",
+      "M": 4,
+      "N": 128,
+      "K": 128,
+      "impl": "fused_int8",
+      "latency_ms": 127.5239
+    },
+    {
+      "kind": "latency",
+      "M": 4,
+      "N": 128,
+      "K": 128,
+      "impl": "fused_int4",
+      "latency_ms": 99.7983
+    }
+  ]
+}
