@@ -105,9 +105,15 @@ class Attention(nn.Module):
 
         impl = self.cfg.attn_impl
         if impl == "triton":
-            from kernels.attention_fwd import flash_attention
-            o = flash_attention(q.contiguous(), k.contiguous(), v.contiguous(),
-                                causal=True)
+            if torch.is_grad_enabled() and (q.requires_grad or k.requires_grad
+                                            or v.requires_grad):
+                from kernels.autograd_ops import flash_attention_train
+                o = flash_attention_train(q.contiguous(), k.contiguous(),
+                                          v.contiguous(), causal=True)
+            else:
+                from kernels.attention_fwd import flash_attention
+                o = flash_attention(q.contiguous(), k.contiguous(),
+                                    v.contiguous(), causal=True)
         elif impl == "sdpa":
             o = F.scaled_dot_product_attention(q, k, v, is_causal=(S == k.shape[2]))
         else:
@@ -157,9 +163,14 @@ class MoE(nn.Module):
         self.aux_loss = self._load_balancing_loss(probs, experts)
 
         if self.cfg.routing_impl == "triton":
-            from kernels.moe_routing import moe_dispatch_combine
-            out = moe_dispatch_combine(flat, weights.to(flat.dtype), experts,
-                                       self.experts)
+            if torch.is_grad_enabled() and flat.requires_grad:
+                from kernels.autograd_ops import moe_dispatch_combine_train
+                out = moe_dispatch_combine_train(flat, weights.to(flat.dtype),
+                                                 experts, self.experts)
+            else:
+                from kernels.moe_routing import moe_dispatch_combine
+                out = moe_dispatch_combine(flat, weights.to(flat.dtype),
+                                           experts, self.experts)
         else:
             out = self._naive_route(flat, weights.to(flat.dtype), experts)
         return out.reshape(B, S, D)

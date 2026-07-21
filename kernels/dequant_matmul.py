@@ -100,6 +100,38 @@ def _int4_matmul_kernel(A, Wp, S, C, M, N, K,
              mask=(offs_m[:, None] < M) & (offs_n[None, :] < N))
 
 
+@triton.jit
+def _int8_dgrad_kernel(DY, W, S, DX, M, N, K,
+                       stride_dm, stride_dn,
+                       stride_wn, stride_wk,
+                       stride_xm, stride_xk,
+                       BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr,
+                       BLOCK_K: tl.constexpr):
+    """dX[M,K] = (dY ∘ s)[M,N] @ W_q[N,K] — input gradient of y = x @ Wᵀ.
+
+    The per-row scale multiplies along the REDUCTION dim here, so it is
+    folded into the dY tile before the dot (it cannot factor out).
+    """
+    pid_m = tl.program_id(0)
+    pid_k = tl.program_id(1)
+    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    offs_k = pid_k * BLOCK_K + tl.arange(0, BLOCK_K)
+
+    acc = tl.zeros([BLOCK_M, BLOCK_K], tl.float32)
+    for n0 in range(0, N, BLOCK_N):
+        offs_n = n0 + tl.arange(0, BLOCK_N)
+        dy = tl.load(DY + offs_m[:, None] * stride_dm + offs_n[None, :] * stride_dn,
+                     mask=(offs_m[:, None] < M) & (offs_n[None, :] < N), other=0.0)
+        s = tl.load(S + offs_n, mask=offs_n < N, other=0.0)
+        w = tl.load(W + offs_n[:, None] * stride_wn + offs_k[None, :] * stride_wk,
+                    mask=(offs_n[:, None] < N) & (offs_k[None, :] < K), other=0)
+        acc = tl.dot((dy * s[None, :]).to(dy.dtype), w.to(dy.dtype), acc)
+
+    tl.store(DX + offs_m[:, None] * stride_xm + offs_k[None, :] * stride_xk,
+             acc.to(DX.dtype.element_ty),
+             mask=(offs_m[:, None] < M) & (offs_k[None, :] < K))
+
+
 def _blocks():
     interp = os.environ.get("TRITON_INTERPRET") == "1"
     return (16, 16, 16) if interp else (32, 64, 64)
@@ -118,6 +150,21 @@ def int8_matmul(a: torch.Tensor, w_q: torch.Tensor, scale: torch.Tensor):
                               c.stride(0), c.stride(1),
                               BLOCK_M=BM, BLOCK_N=BN, BLOCK_K=BK)
     return c
+
+
+def int8_dgrad(dy: torch.Tensor, w_q: torch.Tensor, scale: torch.Tensor):
+    """dx [M, K] = (dy ∘ scale) [M, N] @ w_q [N, K]"""
+    M, N = dy.shape
+    K = w_q.shape[1]
+    dx = torch.empty(M, K, dtype=dy.dtype, device=dy.device)
+    BM, BN, BK = _blocks()
+    grid = (triton.cdiv(M, BM), triton.cdiv(K, BK))
+    _int8_dgrad_kernel[grid](dy, w_q, scale.to(torch.float32), dx, M, N, K,
+                             dy.stride(0), dy.stride(1),
+                             w_q.stride(0), w_q.stride(1),
+                             dx.stride(0), dx.stride(1),
+                             BLOCK_M=BM, BLOCK_N=BN, BLOCK_K=BK)
+    return dx
 
 
 def int4_matmul(a: torch.Tensor, w_packed: torch.Tensor, scale: torch.Tensor,

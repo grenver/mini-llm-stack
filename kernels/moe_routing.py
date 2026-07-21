@@ -54,24 +54,29 @@ def _gather_rows_kernel(X, OUT, IDX, D,
 @triton.jit
 def _combine_rows_kernel(EXP_OUT, W, POS, OUT, D,
                          stride_e, stride_o,
-                         K: tl.constexpr, BLOCK_D: tl.constexpr):
+                         K: tl.constexpr, BLOCK_D: tl.constexpr,
+                         ACC64: tl.constexpr):
     """OUT[t, :] = sum_k W[t,k] * EXP_OUT[POS[t,k], :].
 
     Each program owns one output token row (and one D-block), so the combine
     needs no atomics: it reads its K expert-output rows and accumulates in
-    registers.
+    registers. ACC64 keeps fp64 inputs at full precision (needed so
+    finite-difference gradcheck can see through this op).
     """
     t = tl.program_id(0)
     dblk = tl.program_id(1)
     offs = dblk * BLOCK_D + tl.arange(0, BLOCK_D)
     mask = offs < D
 
-    acc = tl.zeros([BLOCK_D], tl.float32)
+    if ACC64:
+        acc = tl.zeros([BLOCK_D], tl.float64)
+    else:
+        acc = tl.zeros([BLOCK_D], tl.float32)
     for slot in range(K):
         pos = tl.load(POS + t * K + slot)
-        w = tl.load(W + t * K + slot).to(tl.float32)
+        w = tl.load(W + t * K + slot).to(acc.dtype)
         row = tl.load(EXP_OUT + pos * stride_e + offs, mask=mask, other=0.0)
-        acc += w * row.to(tl.float32)
+        acc += w * row.to(acc.dtype)
     tl.store(OUT + t * stride_o + offs, acc.to(OUT.dtype.element_ty), mask=mask)
 
 
@@ -103,7 +108,8 @@ def combine_rows(expert_out: torch.Tensor, weights: torch.Tensor,
     _combine_rows_kernel[grid](expert_out, weights.contiguous(),
                                pos.to(torch.int64).contiguous(), out, D,
                                expert_out.stride(0), out.stride(0),
-                               K=K, BLOCK_D=BLOCK_D)
+                               K=K, BLOCK_D=BLOCK_D,
+                               ACC64=expert_out.dtype == torch.float64)
     return out
 
 

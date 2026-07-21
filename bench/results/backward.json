@@ -1,0 +1,22 @@
+{
+  "bench": "backward",
+  "env": {
+    "device": "cpu (Triton interpreter)",
+    "torch": "2.13.0+cpu",
+    "meaningful_timings": false
+  },
+  "rows": [
+    {
+      "seq": 32,
+      "impl": "triton_fwd_bwd",
+      "latency_ms": 71.069,
+      "peak_mem_mb": NaN
+    },
+    {
+      "seq": 32,
+      "impl": "reference_fwd_bwd",
+      "latency_ms": 1.289,
+      "peak_mem_mb": NaN
+    }
+  ]
+}
