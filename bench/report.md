@@ -82,3 +82,50 @@ _Generated from bench/results/*.json — rerun benches then `python bench/make_r
 | speculative | 2 | 0.089 | 541.44 | 0.345 | 1.69 |
 | speculative | 4 | 0.078 | 612.74 | 0.26 | 2.04 |
 | speculative | 8 | 0.125 | 383.79 | 0.13 | 2.04 |
+
+## Phase 8 — Custom backward kernels (training)
+
+Forward/backward through the custom autograd Functions vs PyTorch autograd on the reference implementation. Correctness = gradcheck + loss-decreases tests, not this table.
+
+> ⚠️ **Correctness-only run** on `cpu (Triton interpreter)` — interpreter timings are meaningless; rerun on GPU for real numbers.
+
+| seq | impl | latency_ms | peak_mem_mb |
+|---|---|---|---|
+| 32 | triton_fwd_bwd | 71.069 | nan |
+| 32 | reference_fwd_bwd | 1.289 | nan |
+
+## Phase 9 — FP8 (e4m3) training emulation
+
+Storage/rounding in true float8_e4m3fn with per-tensor dynamic scaling; matmul arithmetic in fp32 (no FP8 tensor cores on T4 — see README). Convergence curves are the result here.
+
+> ⚠️ **Correctness-only run** on `cpu (Triton interpreter)` — interpreter timings are meaningless; rerun on GPU for real numbers.
+
+| arm | loss@0 | loss@37 | loss@75 | loss@149 | final_loss | diverged |
+|---|---|---|---|---|---|---|
+| fp32 | 4.1617 | 2.3838 | 1.2717 | 0.6288 | 0.6779 | False |
+| fp8_dynamic_scaling | 4.1645 | 2.3464 | 1.2627 | 0.6407 | 0.6873 | False |
+| fp8_no_scaling | 4.1618 | 2.9589 | 2.9811 | 2.953 | 2.9386 | False |
+
+## Phase 10 — ZeRO-style optimizer sharding (SIMULATED ranks)
+
+Per-rank optimizer-state memory is REAL (states genuinely live in separate processes); step-time comparisons are not meaningful on shared hardware.
+
+> ⚠️ **Correctness-only run** on `cpu (Triton interpreter)` — interpreter timings are meaningless; rerun on GPU for real numbers.
+
+| config | per_rank_state_mb | step_ms | memory_real | timing_simulated |
+|---|---|---|---|---|
+| adamw_1proc | 37.28 | 54.2 | True | False |
+| zero_w2_overlap | 18.88 | 213.5 | True | True |
+
+## Phase 11 — Disaggregated prefill/decode (SIMULATED)
+
+Two processes time-share one device; KV-cache transfer cost is real, pool separation benefits are not observable. Correctness + overhead breakdown only.
+
+> ⚠️ **Correctness-only run** on `cpu (Triton interpreter)` — interpreter timings are meaningless; rerun on GPU for real numbers.
+
+> ⚠️ **Simulated parallelism:** both pools share one device: the split can only add overhead in this environment; breakdown shows where it goes
+
+| config | wall_s | kv_transferred_mb | mean_transfer_ms |
+|---|---|---|---|
+| unified_engine | 0.054 | 0.0 | 0.0 |
+| disaggregated_simulated | 1.582 | 0.75 | 42.77 |

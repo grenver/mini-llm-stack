@@ -36,10 +36,18 @@ measure is labeled simulated, both here and in the generated report.**
                          │ hot paths
             ┌────────────▼──────────────── kernels/ ─────────────┐
             │  attention_fwd.py   flash-attn-style fused fwd     │
+            │  attention_bwd.py   hand-written flash backward    │
             │  paged_attention.py decode over scattered blocks   │
             │  moe_routing.py     gather / combine (no atomics)  │
+            │  moe_backward.py    atomic scatter-add, combine bwd│
             │  dequant_matmul.py  INT8/INT4 dequant inside GEMM  │
+            │  fp8_matmul.py      e4m3 bit-decode GEMM, inline   │
+            │                     scales (emulated arithmetic)   │
+            │  autograd_ops.py    torch.autograd.Function glue   │
+            │  fusion_compiler.py graph -> generated Triton      │
             └────────────────────────────────────────────────────┘
+   also: train/fp8.py (dynamic scaling), train/zero.py (ZeRO sharding),
+         serve/disagg.py (split prefill/decode pools)
 ```
 
 ## Run it
@@ -69,8 +77,26 @@ CUDA machine the same code compiles to real kernels.
 | Serving engine + scheduler | **Real** — reproduces naive generation token-for-token |
 | Quantization accuracy/memory | **Real** |
 | Speculative decoding | **Real** — greedy variant asserted identical to target output |
+| Backward kernels (Phase 8) | **Real** — fp64 gradcheck where kernels preserve precision; analytic-vs-reference + finite-difference spot checks + loss-decrease elsewhere (see tests/test_backward.py docstring for the tolerance reasoning) |
+| FP8 training (Phase 9) | **Rounding real, arithmetic emulated** — true e4m3/e5m2 casts + dynamic scaling, fp32 matmuls (no FP8 hardware on T4/CPU). Finding: scaled fp8 tracks fp32; unscaled fp8 stalls via gradient-cast underflow. |
+| ZeRO sharding (Phase 10) | **Memory savings real** (states live in separate processes); step timing simulated |
+| Disaggregated serving (Phase 11) | **Correctness real, split simulated** — one device time-shared; transfer overhead dominates by construction and is reported as such |
+| Fusion compiler (Phase 12) | **Real** — generated kernels validated against torch and the hand-written attention chain |
 | Tensor/pipeline parallelism | **Logic real, speedup SIMULATED** — ranks are processes sharing one device over gloo; correctness (outputs/grads match dense) is the tested claim. On real hardware you'd get NCCL, true compute/comm overlap, and actual scaling. |
 | "Multi-GPU" benchmarks (phases 3/10/11) | **Simulated, labeled as such** — they measure orchestration overhead, not parallel speedup |
+
+## GPU benchmark run (Kaggle)
+
+One consolidated T4 session runs a CUDA-tensor correctness smoke suite
+(`kaggle/gpu_smoke.py` — hard gate: no benchmarks on unverified kernels),
+then every benchmark at GPU sizes:
+
+```bash
+python kaggle/push_and_fetch.py push     # start the session (uses kaggle CLI)
+python kaggle/push_and_fetch.py status
+python kaggle/push_and_fetch.py fetch    # pull results into bench/results/
+python bench/make_report.py              # refresh report with GPU numbers
+```
 
 ## Known limitations
 
